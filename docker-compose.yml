@@ -1,0 +1,42 @@
+version: '3.3'
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+     - "8080:8080"
+    links:
+     - redis
+    restart: always
+    networks:
+     - node_net
+    depends_on: 
+     - redis
+    environment:
+    - WAIT_HOSTS=redis:6379
+    - WAIT_HOSTS_TIMEOUT=300
+    - WAIT_SLEEP_INTERVAL=30
+    - WAIT_HOST_CONNECT_TIMEOUT=30  
+  
+  redis:
+    image: "redis:3.2"
+    hostname: redis
+    command: [ "redis-server", "--protected-mode", "no" ]
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis-data:/var/lib/redis
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+    environment:
+      - REDIS_REPLICATION_MODE=master
+    networks:
+      node_net:
+        ipv4_address: 172.28.0.2
+
+networks:
+  node_net:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16
